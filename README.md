@@ -1,5 +1,5 @@
 # dzn_ZeusSearchPatch
-#### Version: 0.2
+#### Version: 0.3
 #### Requires: 
 - CBA_A3
 
