@@ -1,7 +1,8 @@
+enableSaving [false,false];
 
 /*
 	dzn_ZeusSearchPatch
-	v0.3
+	v0.4
 */
 
 if (!hasInterface) exitWith {};
@@ -13,10 +14,23 @@ call compile preprocessFileLineNumbers format ["%1Settings.sqf", "\dzn_ZeusSearc
 #define ORIGINAL_SEARCH_IDC 283
 #define CUSTOM_SEARCH_IDC 109200
 
+#define GET_ZEUS_CTRL(X) (ZEUS_DISPLAY displayCtrl X)
+
+// --- Stuff to fix bug of missiong sides
+#define SIDE_B 155
+#define SIDE_O 156
+#define SIDE_I 157
+#define SIDE_C 158
+#define SIDE_E 159
+#define MODE_UNITS 150
+#define MODE_GROUPS 151
+#define MODE_MODULES 152
+#define MODE_MARKERS 154
+
 [] spawn {
-	waitUntil { !isNull (call BIS_fnc_displayMission) && local player };	
-	GVAR(Show) = true;
+	waitUntil { !isNull (call BIS_fnc_displayMission) && local player };
 	
+	GVAR(Show) = true;	
 	GVAR(fnc_addSearchField) = {
 		/*
 		 *	Hides original search field, draw new one and set up needed event handlers
@@ -25,8 +39,8 @@ call compile preprocessFileLineNumbers format ["%1Settings.sqf", "\dzn_ZeusSearc
 		// --- Values from Arma 3\Curator\Addons\ui_f_curator\a3\ui_f_curator UI classes
 		#define GRID_X	(((safezoneW / safezoneH) min 1.2) / 40)
 		#define GRID_Y	((((safezoneW / safezoneH) min 1.2) / 1.2) / 25)
-		#define GRP_X		safezoneX + safezoneW - 12.5 * GRID_X
-		#define GRP_Y		1.5 * GRID_Y + (safezoneY)
+		#define GRP_X	safezoneX + safezoneW - 12.5 * GRID_X
+		#define GRP_Y	1.5 * GRID_Y + (safezoneY)
 		#define CTRL_X	0.1 * GRID_X - 1 * GRID_X
 		#define CTRL_Y	4.1 * GRID_Y
 		#define CTRL_W	12.7 * GRID_X + 0.05 * GRID_X
@@ -94,6 +108,34 @@ call compile preprocessFileLineNumbers format ["%1Settings.sqf", "\dzn_ZeusSearc
 		};
 	};
 	
+	// --- Workaround for bug of missing sides on switching mode during search
+	GVAR(Mode2SideMap) = [
+		[MODE_UNITS, [SIDE_B, SIDE_O, SIDE_I, SIDE_C, SIDE_E]]
+		, [MODE_GROUPS, [SIDE_B, SIDE_O, SIDE_I, SIDE_E]]
+		, [MODE_MODULES, [SIDE_E]]
+		, [MODE_MARKERS, [SIDE_E]]
+	];
+	
+	GVAR(fnc_addModeSwitchHandler) = {
+		{
+			GET_ZEUS_CTRL(_x) ctrlAddEventHandler ["MouseButtonUp", {
+				_this spawn GVAR(fnc_showSidesFix);
+			}];		
+		} forEach [MODE_UNITS, MODE_GROUPS, MODE_MODULES, MODE_MARKERS];	
+	};
+	
+	GVAR(fnc_showSidesFix) = {
+		params ["_control"];
+		
+		uiSleep 0.001;
+		private _idc = ctrlIDC _control;
+		private _sides = ((GVAR(Mode2SideMap) select { _x # 0 == _idc }) # 0) # 1;				
+		{
+			if (!ctrlShown GET_ZEUS_CTRL(_x)) then {
+				GET_ZEUS_CTRL(_x) ctrlShow true;
+			};
+		} forEach _sides;
+	};	
 	
 	while {!isNull (call BIS_fnc_displayMission)} do {
 		if (GVAR(Enabled)) then {
@@ -101,6 +143,7 @@ call compile preprocessFileLineNumbers format ["%1Settings.sqf", "\dzn_ZeusSearc
 			waituntil {!(isNull ZEUS_DISPLAY)}; 
 
 			[] call GVAR(fnc_addSearchField);
+			[] call GVAR(fnc_addModeSwitchHandler);
 			
 			// Stops loop until zeus ui opened
 			waituntil {isNull ZEUS_DISPLAY}; 
