@@ -34,3 +34,11 @@ private _add = {
 	, "CHECKBOX"
 	, true
 ] call _add;
+
+[
+	"UseExtraWideField"
+	, "Use extra wide search field"
+	, "Makes new search field wider than Zeus UI."
+	, "CHECKBOX"
+	, true
+] call _add;

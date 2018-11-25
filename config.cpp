@@ -9,7 +9,7 @@ class CfgPatches
 		requiredVersion = 0.1;
 		requiredAddons[] = {"CBA_MAIN"};
 		author[] = {"10Dozen"};
-		version = "0.3";
+		version = "0.4";
 	};
 };
 
@@ -17,6 +17,6 @@ class Extended_PostInit_EventHandlers
 {
 	class dzn_ZeusSearchPatch
 	{
-		init = "call ('\dzn_ZeusSearchPatch\Init.sqf' call SLX_XEH_COMPILE)";
+		init = call compile preprocessFileLineNumbers "\dzn_ZeusSearchPatch\Init.sqf";
 	};
 };
